@@ -2,12 +2,13 @@ package pl.edu.wszib.order.application.order;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import pl.edu.wszib.order.api.OrderApi;
-import pl.edu.wszib.order.api.OrderApiResult;
-import pl.edu.wszib.order.api.OrderError;
-import pl.edu.wszib.order.application.product.Product;
+import pl.edu.wszib.order.api.order.OrderApi;
+import pl.edu.wszib.order.api.order.OrderApiResult;
+import pl.edu.wszib.order.api.order.OrderError;
+import pl.edu.wszib.order.api.product.ProductApi;
 import pl.edu.wszib.order.application.product.ProductFacade;
 
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 
@@ -19,24 +20,29 @@ public class OrderFacade {
     private final OrderRepository orderRepository;
     private final ProductFacade productFacade;
 
-    public OrderApi create() {
+    public OrderApiResult create() {
         final Order order = Order.create();
         orderRepository.save(order);
-        return order.toApi();
+        return OrderApiResult.success(order.toApi());
     }
 
     public OrderApi findByIdOrThrow(final String orderId) {
-        return findById(orderId)
-                .orElseThrow();
+        final OrderApiResult result = findById(orderId);
+        if (result.isFailure()) {
+            throw new NoSuchElementException();
+        }
+        return result.getOrder();
     }
 
-    public Optional<OrderApi> findById(final String id) {
+    public OrderApiResult findById(final String id) {
         return findById(OrderId.of(id));
     }
 
-    public Optional<OrderApi> findById(final OrderId id) {
+    public OrderApiResult findById(final OrderId id) {
         return orderRepository.findById(id)
-                .map(Order::toApi);
+                .map(Order::toApi)
+                .map(OrderApiResult::success)
+                .orElseGet(() -> OrderApiResult.failure(OrderError.ORDER_NOT_FOUND));
     }
 
     public OrderApiResult addItem(final String orderId,
@@ -51,7 +57,7 @@ public class OrderFacade {
     private OrderApiResult addItem(final Order order,
                                    final String productId,
                                    final Integer quantity) {
-        final Optional<Product> product = productFacade.findById(productId);
+        final Optional<ProductApi> product = productFacade.findById(productId);
         if (product.isEmpty()) {
             return OrderApiResult.failure(OrderError.PRODUCT_NOT_FOUND);
         }
