@@ -1,0 +1,89 @@
+openapi: 3.1.0
+info:
+  title: OpenAPI for order system
+  description: Title
+  version: 1.0.0
+tags:
+  - name: Products
+    description: Products endpoints
+  - name: Orders
+    description: Orders endpoints
+servers:
+  - url: "https://localhost:8080"
+
+paths:
+  /products/{productId}:
+    get:
+      tags:
+        - Products
+      parameters:
+        - name: productId
+          description: Identyfikator produkty
+          in: path
+          schema:
+            type: string
+      operationId: getProduct
+      summary: Product
+      description: Returns all pets from the system that the user has access to
+      responses:
+        "200":
+          description: Dane produktu.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "404":
+          description: Nie znaleziono produktu o podanym id.
+  /products:
+    post:
+      tags:
+        - Products
+      operationId: createProduct
+      summary: Products
+      requestBody:
+        content: 
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Product"
+      responses:
+        "200":
+          description: Dane produktu.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+    get:
+      tags:
+        - Products
+      operationId: getAllProducts
+      summary: Products
+      responses:
+        "200":
+          description: Dane produktów.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+  /orders:
+    get:
+      tags:
+        - Orders
+      summary: Orders
+      operationId: getAllOrders
+      
+components:
+  schemas:
+    Product:
+      type: object
+      properties:
+        id:
+          description: Identyfikator produktu
+          type: string
+        name:
+          description: Nazwa produktu
+          type: string
+        price:
+          description: Cena produktu
+          type: number
