@@ -1,5 +1,8 @@
 package pl.edu.wszib.order.application.order;
 
+import pl.edu.wszib.order.api.PageApi;
+
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -11,6 +14,11 @@ public class InMemoryOrderRepository implements OrderRepository {
     public Order save(final Order order) {
         orders.put(order.getId(), order);
         return order;
+    }
+
+    @Override
+    public Collection<Order> findAll(PageApi pageApi) {
+        return orders.values();
     }
 
     @Override

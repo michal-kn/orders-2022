@@ -2,19 +2,18 @@ package pl.edu.wszib.order.application.order;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import pl.edu.wszib.order.api.PageApi;
 import pl.edu.wszib.order.api.order.OrderApi;
 import pl.edu.wszib.order.api.order.OrderApiResult;
 import pl.edu.wszib.order.api.order.OrderError;
 import pl.edu.wszib.order.api.product.ProductApi;
 import pl.edu.wszib.order.application.product.ProductFacade;
 
+import java.util.Collection;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
-
-//TODO Zajęcia 2:
-// AbstractTest
-// CI za pomocą Github actions
 @AllArgsConstructor(access = AccessLevel.PACKAGE)
 public class OrderFacade {
     private final OrderRepository orderRepository;
@@ -38,6 +37,13 @@ public class OrderFacade {
         return findById(OrderId.of(id));
     }
 
+    public Collection<OrderApi> findAll(final PageApi pageApi) {
+        return orderRepository.findAll(pageApi)
+                .stream()
+                .map(Order::toApi)
+                .collect(Collectors.toSet());
+    }
+
     public OrderApiResult findById(final OrderId id) {
         return orderRepository.findById(id)
                 .map(Order::toApi)
@@ -52,8 +58,8 @@ public class OrderFacade {
                 .map(order -> addItem(order, productId, quantity))
                 .orElseGet(() -> OrderApiResult.failure(OrderError.ORDER_NOT_FOUND));
     }
-
     //TODO Refactor
+
     private OrderApiResult addItem(final Order order,
                                    final String productId,
                                    final Integer quantity) {
@@ -61,6 +67,7 @@ public class OrderFacade {
         if (product.isEmpty()) {
             return OrderApiResult.failure(OrderError.PRODUCT_NOT_FOUND);
         }
+        //FIXME if product already exists increase quantity only
         final OrderItem orderItem = OrderItem.create(product.get(), quantity);
         final Order modifiedOrder = order.addItem(orderItem);
         return OrderApiResult.success(orderRepository.save(modifiedOrder).toApi());
